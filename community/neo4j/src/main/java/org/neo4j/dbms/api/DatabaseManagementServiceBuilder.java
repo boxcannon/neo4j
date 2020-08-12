@@ -67,11 +67,17 @@ public class DatabaseManagementServiceBuilder
     protected DependencyResolver dependencies = new Dependencies();
     protected final Map<String,URLAccessRule> urlAccessRules = new HashMap<>();
     protected File homeDirectory;
+    protected File WCDirectory;
     protected Config.Builder config = Config.newBuilder();
 
     public DatabaseManagementServiceBuilder( File homeDirectory )
     {
         this.homeDirectory = homeDirectory;
+        WCDirectory = new File(homeDirectory.getPath() + "/WCSketch");
+        if(!WCDirectory.exists()){
+            boolean flag = WCDirectory.mkdir();
+            System.out.println("make directory successfully");
+        }
         Services.loadAll( ExtensionFactory.class ).forEach( extensions::add );
     }
 

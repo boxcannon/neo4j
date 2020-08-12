@@ -22,6 +22,9 @@ package org.neo4j.kernel.impl.coreapi;
 import java.util.Map;
 import java.util.Optional;
 
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.connectioninfo.ClientConnectionInfo;
 import org.neo4j.internal.kernel.api.security.SecurityContext;
@@ -54,6 +57,8 @@ public interface InternalTransaction extends Transaction, TransactionalEntityFac
     void checkInTransaction();
 
     boolean isOpen();
+
+    ResourceIterator<Relationship> getRelationships(long srcNodeID, long dstNodeID);
 
     void terminate( Status reason );
 }

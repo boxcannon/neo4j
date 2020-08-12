@@ -125,4 +125,6 @@ public interface GraphDatabaseService
      * @return database name
      */
     String databaseName();
+
+    //boolean loadWCSFromFile(String name);
 }

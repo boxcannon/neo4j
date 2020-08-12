@@ -19,12 +19,15 @@
  */
 package org.neo4j.dbms.database;
 
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.neo4j.configuration.Config;
 import org.neo4j.dbms.api.DatabaseManagementException;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseNotFoundException;
+
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Transaction;
@@ -32,12 +35,14 @@ import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.graphdb.event.TransactionEventListener;
 import org.neo4j.kernel.availability.CompositeDatabaseAvailabilityGuard;
 import org.neo4j.kernel.database.NamedDatabaseId;
+import org.neo4j.kernel.impl.factory.GraphDatabaseFacade;
 import org.neo4j.kernel.internal.event.GlobalTransactionEventListeners;
 import org.neo4j.kernel.lifecycle.Lifecycle;
 import org.neo4j.logging.Log;
 import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 
-import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+import static org.neo4j.configuration.GraphDatabaseSettings.*;
+
 
 public class DatabaseManagementServiceImpl implements DatabaseManagementService
 {
@@ -62,8 +67,9 @@ public class DatabaseManagementServiceImpl implements DatabaseManagementService
     @Override
     public GraphDatabaseService database( String name ) throws DatabaseNotFoundException
     {
-        return databaseManager.getDatabaseContext( name )
+        GraphDatabaseFacade gds = databaseManager.getDatabaseContext( name )
                 .orElseThrow( () -> new DatabaseNotFoundException( name ) ).databaseFacade();
+        return gds;
     }
 
     @Override
@@ -162,4 +168,5 @@ public class DatabaseManagementServiceImpl implements DatabaseManagementService
             throw new IllegalArgumentException( "Registration of transaction event listeners on " + SYSTEM_DATABASE_NAME + " is not supported." );
         }
     }
+
 }

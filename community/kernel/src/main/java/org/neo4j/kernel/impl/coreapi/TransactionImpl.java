@@ -19,6 +19,7 @@
  */
 package org.neo4j.kernel.impl.coreapi;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,22 +28,7 @@ import java.util.function.Consumer;
 
 import org.neo4j.common.EntityType;
 import org.neo4j.exceptions.KernelException;
-import org.neo4j.graphdb.ConstraintViolationException;
-import org.neo4j.graphdb.Entity;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Lock;
-import org.neo4j.graphdb.MultipleFoundException;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.NotFoundException;
-import org.neo4j.graphdb.NotInTransactionException;
-import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterable;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.StringSearchMode;
-import org.neo4j.graphdb.TransactionTerminatedException;
+import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.graphdb.traversal.BidirectionalTraversalDescription;
 import org.neo4j.graphdb.traversal.TraversalDescription;
@@ -113,6 +99,7 @@ public class TransactionImpl implements InternalTransaction
     private final TransactionExceptionMapper exceptionMapper;
     private KernelTransaction transaction;
     private boolean closed;
+    public WCSketch wcSketch;
 
     public TransactionImpl( TokenHolders tokenHolders, TransactionalContextFactory contextFactory,
             DatabaseAvailabilityGuard availabilityGuard, QueryExecutionEngine executionEngine,
@@ -132,6 +119,8 @@ public class TransactionImpl implements InternalTransaction
     public void commit()
     {
         safeTerminalOperation( KernelTransaction::commit );
+        File file = new File(wcSketch.filePath);
+        WCSketch.SaveToFile(file, wcSketch);
     }
 
     @Override
@@ -858,5 +847,40 @@ public class TransactionImpl implements InternalTransaction
     private interface TransactionalOperation
     {
         void perform( KernelTransaction transaction ) throws Exception;
+    }
+
+    @Override
+    public ResourceIterator<Relationship> getRelationships(long srcNodeID, long dstNodeID){
+        WCSketch.WCRelation wcRelation = wcSketch.queryRel((int)srcNodeID, (int)dstNodeID);
+        //TODO 这里最好需要新建一个Iterator类型，构造函数以int数组构建
+        ResourceIterator<Relationship> iterable = new ResourceIterator<Relationship>() {
+            @Override
+            public void close() {
+
+            }
+
+            @Override
+            public boolean hasNext() {
+                return false;
+            }
+
+            @Override
+            public Relationship next() {
+                return null;
+            }
+
+            public void add(){
+
+            }
+        };
+        int iter = wcRelation.nextRec;
+        WCSketch.WCRecord wcRecord;
+        Node nodeTmp = new NodeEntity(this, -1);
+        for(;iter != -1; iter = wcRecord.nextRec){
+            wcRecord = wcSketch.records.get(iter);
+            Relationship rel = getRelationshipById(wcRecord.relID);
+
+        }
+        return iterable;
     }
 }

@@ -395,4 +395,9 @@ public class TestFabricTransaction implements InternalTransaction
     {
         return kernelInternalTransaction.getRelationshipTypeById( type );
     }
+
+    @Override
+    public ResourceIterable<Relationship> getRelationships(long srcNodeID, long dstNodeID){
+        return null;
+    }
 }

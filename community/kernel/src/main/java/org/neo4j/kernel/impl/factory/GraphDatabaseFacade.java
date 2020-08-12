@@ -19,6 +19,9 @@
  */
 package org.neo4j.kernel.impl.factory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,10 +51,12 @@ import org.neo4j.kernel.impl.coreapi.TransactionImpl;
 import org.neo4j.kernel.impl.query.Neo4jTransactionalContextFactory;
 import org.neo4j.kernel.impl.query.TransactionalContextFactory;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.graphdb.WCSketch;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.neo4j.configuration.GraphDatabaseSettings.neo4j_home;
 import static org.neo4j.configuration.GraphDatabaseSettings.transaction_timeout;
 import static org.neo4j.graphdb.ResultTransformer.EMPTY_TRANSFORMER;
 import static org.neo4j.internal.kernel.api.connectioninfo.ClientConnectionInfo.EMBEDDED_CONNECTION;
@@ -69,6 +74,7 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI
     private final DatabaseAvailabilityGuard availabilityGuard;
     private final DbmsInfo dbmsInfo;
     private Function<LoginContext, LoginContext> loginContextTransformer = Function.identity();
+
 
     public GraphDatabaseFacade( GraphDatabaseFacade facade, Function<LoginContext,LoginContext> loginContextTransformer )
     {
@@ -174,8 +180,11 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI
             long timeoutMillis, Consumer<Status> terminationCallback, TransactionExceptionMapper transactionExceptionMapper )
     {
         var kernelTransaction = beginKernelTransaction( type, loginContext, connectionInfo, timeoutMillis );
-        return new TransactionImpl( database.getTokenHolders(), contextFactory, availabilityGuard, database.getExecutionEngine(), kernelTransaction,
+        TransactionImpl transcation = new TransactionImpl( database.getTokenHolders(), contextFactory, availabilityGuard, database.getExecutionEngine(), kernelTransaction,
                 terminationCallback, transactionExceptionMapper );
+        loadWCSFromFile(config.get(neo4j_home).getFileName().toString(), transcation);
+
+        return transcation;
     }
 
     @Override
@@ -226,4 +235,27 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI
     {
         return dbmsInfo + " [" + databaseLayout() + "]";
     }
+
+    public boolean loadWCSFromFile(String name, TransactionImpl transaction){
+        File file = new File("./WCSketch/" + name);
+        if(!file.exists()) {
+            File dir = new File("./WCSketch");
+            if(!dir.exists())
+                dir.mkdir();
+            try {
+                file.createNewFile();
+                transaction.wcSketch = new WCSketch(10000);
+            } catch (Exception e){
+                e.printStackTrace();
+                //log.error(e.getMessage());
+            }
+        } else {
+            transaction.wcSketch = WCSketch.loadFromFile(file);
+        }
+
+        return true;
+    }
+
+    //写入0?
+
 }

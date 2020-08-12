@@ -29,16 +29,7 @@ import java.util.Objects;
 
 import org.neo4j.common.EntityType;
 import org.neo4j.exceptions.KernelException;
-import org.neo4j.graphdb.ConstraintViolationException;
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.NotFoundException;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterable;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.TransactionFailureException;
+import org.neo4j.graphdb.*;
 import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.TokenRead;
@@ -54,6 +45,7 @@ import org.neo4j.internal.kernel.api.helpers.Nodes;
 import org.neo4j.internal.kernel.api.helpers.RelationshipFactory;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
+import org.neo4j.kernel.impl.coreapi.TransactionImpl;
 import org.neo4j.storageengine.api.Degrees;
 import org.neo4j.values.storable.Values;
 
@@ -519,6 +511,9 @@ public class NodeEntity implements Node, RelationshipFactory<Relationship>
         try
         {
             long relationshipId = transaction.dataWrite().relationshipCreate( nodeId, relationshipTypeId, otherNode.getId() );
+            TransactionImpl ti = (TransactionImpl) internalTransaction;
+            ti.wcSketch.insert((int)nodeId, (int)otherNode.getId(), WCSketch.buildWCRecord((int)relationshipId));
+            //internalTransaction.
             return internalTransaction.newRelationshipEntity( relationshipId, nodeId, relationshipTypeId, otherNode.getId() );
         }
         catch ( EntityNotFoundException e )

@@ -328,5 +328,10 @@ public class ProcedureTransactionProvider implements ThrowingFunction<Context,Tr
         {
             return transaction.getRelationshipTypeById( type );
         }
+
+        @Override
+        public ResourceIterable<Relationship> getRelationships(long srcNodeID, long dstNodeID){
+            return transaction.getRelationships(srcNodeID, dstNodeID);
+        }
     }
 }
