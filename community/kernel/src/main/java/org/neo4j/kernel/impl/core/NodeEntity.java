@@ -513,6 +513,7 @@ public class NodeEntity implements Node, RelationshipFactory<Relationship>
             long relationshipId = transaction.dataWrite().relationshipCreate( nodeId, relationshipTypeId, otherNode.getId() );
             TransactionImpl ti = (TransactionImpl) internalTransaction;
             ti.wcSketch.insert((int)nodeId, (int)otherNode.getId(), WCSketch.buildWCRecord((int)relationshipId));
+            ti.wcSketchOpt.insert((int)nodeId, (int)otherNode.getId(), (int)relationshipId);
             //internalTransaction.
             return internalTransaction.newRelationshipEntity( relationshipId, nodeId, relationshipTypeId, otherNode.getId() );
         }

@@ -62,6 +62,7 @@ import org.neo4j.kernel.availability.UnavailableException;
 import org.neo4j.kernel.impl.api.TokenAccess;
 import org.neo4j.kernel.impl.core.NodeEntity;
 import org.neo4j.kernel.impl.core.RelationshipEntity;
+import org.neo4j.kernel.impl.core.WCSketchOpt;
 import org.neo4j.kernel.impl.coreapi.internal.NodeCursorResourceIterator;
 import org.neo4j.kernel.impl.coreapi.internal.NodeLabelPropertyIterator;
 import org.neo4j.kernel.impl.coreapi.schema.SchemaImpl;
@@ -100,6 +101,7 @@ public class TransactionImpl implements InternalTransaction
     private KernelTransaction transaction;
     private boolean closed;
     public WCSketch wcSketch;
+    public WCSketchOpt wcSketchOpt;
 
     public TransactionImpl( TokenHolders tokenHolders, TransactionalContextFactory contextFactory,
             DatabaseAvailabilityGuard availabilityGuard, QueryExecutionEngine executionEngine,
@@ -120,7 +122,7 @@ public class TransactionImpl implements InternalTransaction
     {
         safeTerminalOperation( KernelTransaction::commit );
         File file = new File(wcSketch.filePath);
-        WCSketch.SaveToFile(file, wcSketch);
+        WCSketch.saveToFile(file, wcSketch);
     }
 
     @Override
@@ -852,7 +854,7 @@ public class TransactionImpl implements InternalTransaction
     @Override
     public ResourceIterator<Relationship> getRelationships(long srcNodeID, long dstNodeID){
         WCSketch.WCRelation wcRelation = wcSketch.queryRel((int)srcNodeID, (int)dstNodeID);
-        //TODO 这里最好需要新建一个Iterator类型，构造函数以int数组构建
+        //TODO 这里最好需要新建一个Iterator类型，构造函数以int数组构建 WCRelation long数组
         ResourceIterator<Relationship> iterable = new ResourceIterator<Relationship>() {
             @Override
             public void close() {
@@ -869,7 +871,7 @@ public class TransactionImpl implements InternalTransaction
                 return null;
             }
 
-            public void add(){
+            public void add() {
 
             }
         };

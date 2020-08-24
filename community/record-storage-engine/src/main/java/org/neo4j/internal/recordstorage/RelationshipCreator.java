@@ -105,6 +105,8 @@ public class RelationshipCreator
             RecordAccess<RelationshipRecord, Void> relRecords,
             RecordAccess<RelationshipGroupRecord, Integer> relGroupRecords, ResourceLocker locks )
     {
+        //TODO change the insert position here?
+        // 修改插入位置应该是修改setFirstNextRel
         // Assertion interpreted: if node is a normal node and we're trying to create a
         // relationship that we already have as first rel for that node --> error
         assert firstNode.getNextRel() != rel.getId() || firstNode.isDense();

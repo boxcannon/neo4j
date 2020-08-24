@@ -1,4 +1,8 @@
-package org.neo4j.graphdb;
+package org.neo4j.kernel.impl.core;
+
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
 import java.util.Random;
 
@@ -11,7 +15,8 @@ public class WCSketchOpt {
     private final int COL = 2;
     private final int MINN = 2000000;
     private final int MAXX = -1;
-    public WCBucket[][] buckets;
+    public InternalTransaction tx;
+    public WCOBucket[][] buckets;
 
     private class APHash {
         public int seed;
@@ -32,7 +37,8 @@ public class WCSketchOpt {
         }
     }
 
-    public WCSketchOpt(int length){
+    public WCSketchOpt(int length, InternalTransaction tx){
+        this.tx = tx;
         this.length = length;
         seeds = new int[4];
         hashes = new APHash[4];
@@ -40,10 +46,10 @@ public class WCSketchOpt {
             seeds[i] = random.nextInt();
             hashes[i].setSeed(seeds[i]);
         }
-        buckets = new WCBucket[length][length];
+        buckets = new WCOBucket[length][length];
     }
 
-    public void insert(int srcID, int dstID, Relationship relationship){
+    public void insert(int srcID, int dstID, int relationshipReference){
         String src = String.valueOf(srcID);
         String dst = String.valueOf(dstID);
         int[] row = new int[2];
@@ -52,7 +58,7 @@ public class WCSketchOpt {
             row[i] = hashes[ROW + i].hash(src);
             col[i] = hashes[COL + i].hash(dst);
         }
-        WCBucket tempBuc = buckets[row[0]][col[0]];
+        WCOBucket tempBuc = buckets[row[0]][col[0]];
         int minn = MINN;
         for(int i = 0; i < 1; ++i){
             for(int j = 0; j < 1; ++j){
@@ -63,10 +69,17 @@ public class WCSketchOpt {
                 }
             }
         }
-        Transaction tx;
+
         //增添relationship内部指针修改
         tempBuc.counter++;
-        tempBuc.pointer_h = relationship;
+        updateWCPointer(tempBuc.pointer_h, relationshipReference);
+        tempBuc.pointer_h = relationshipReference;
+
+    }
+
+    public void updateWCPointer(int oldP, int newP){
+        Relationship oldR = tx.getRelationshipById(oldP);
+        Relationship newR = tx.getRelationshipById(newP);
     }
 
     public Relationship queryRecent(int srcID, int dstID){
@@ -106,14 +119,14 @@ public class WCSketchOpt {
     }
 
 
-    private class WCBucket{
+    private class WCOBucket {
         public int counter;
-        public Relationship pointer_h;
+        public int pointer_h;
         //public int pointer_t;
 
-        public WCBucket(){
+        public WCOBucket(){
             counter = 0;
-            pointer_h = null;
+            pointer_h = -1;
         }
     }
 

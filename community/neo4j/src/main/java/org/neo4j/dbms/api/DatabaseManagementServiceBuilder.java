@@ -73,11 +73,14 @@ public class DatabaseManagementServiceBuilder
     public DatabaseManagementServiceBuilder( File homeDirectory )
     {
         this.homeDirectory = homeDirectory;
+
         WCDirectory = new File(homeDirectory.getPath() + "/WCSketch");
         if(!WCDirectory.exists()){
             boolean flag = WCDirectory.mkdir();
             System.out.println("make directory successfully");
         }
+
+
         Services.loadAll( ExtensionFactory.class ).forEach( extensions::add );
     }
 

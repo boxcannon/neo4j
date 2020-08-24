@@ -238,7 +238,7 @@ public class WCSketch {
         }
         return null;
     }
-    public static void SaveToFile(File file, WCSketch wcSketch){
+    public static void saveToFile(File file, WCSketch wcSketch){
         try {
             FileOutputStream fos = new FileOutputStream(file);
             OutputStreamWriter osw = new OutputStreamWriter(fos);
